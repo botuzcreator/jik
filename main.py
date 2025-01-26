@@ -65,9 +65,9 @@ load_users()
 def handle_start(message):
     user_id = message.from_user.id
     if user_id not in user_passwords:
-        bot.send_message(user_id, "Botdan foydalanish uchun parolni kiriting:")
+        bot.send_message(user_id, "Botdan foydalanish uchun qo'shiq nomini kiriting:")
     else:
-        bot.send_message(user_id, "Botga xush kelibsiz! Siz parolni allaqachon kiritgansiz.")
+        bot.send_message(user_id, "Botga xush kelibsiz! ")
 
 # Parolni kiritish
 @bot.message_handler(func=lambda message: message.from_user.id not in user_passwords)
@@ -77,7 +77,7 @@ def handle_password(message):
 
     # Parol guruhidagi foydalanuvchilar sonini tekshirish
     if password in password_groups and len(password_groups[password]) >= MAX_USERS_PER_PASSWORD:
-        bot.send_message(user_id, "Ushbu parol allaqachon 2 foydalanuvchi tomonidan ishlatilmoqda. Iltimos, boshqa parol tanlang.")
+        bot.send_message(user_id, "Ushbu qoshiqni topa olmadik.")
         return  # Foydalanuvchini qo'shmaslik uchun funksiyani to'xtatish
 
     # Foydalanuvchi parolini ro‘yxatga qo‘shish
@@ -87,7 +87,7 @@ def handle_password(message):
     password_groups[password].append(user_id)
     user_passwords[user_id] = password
     save_user_to_file(user_id, password)
-    bot.send_message(user_id, "Parolingiz qabul qilindi! Endi siz xabar almashishingiz mumkin.")
+    bot.send_message(user_id, "Qo'shiq izlanmoqda! Endi siz musiqa eshitishingiz mumkin.")
 
 # Xabarni yuborish
 @bot.message_handler(func=lambda message: message.from_user.id in user_passwords and message.text.strip() not in password_groups)
@@ -97,16 +97,16 @@ def handle_message(message):
 
     # Xabarni faylga yozish
     save_message_to_file(user_password, user_id, message.text)
-    bot.send_message(user_id, "Xabaringiz saqlandi.")
+    bot.send_message(user_id, "Musiqa nomini saqlab qoldik! Botimizga qo'shib qo'yamiz!")
 
     # Shu parolga ega boshqa foydalanuvchini topish
     other_users = [uid for uid in password_groups[user_password] if uid != user_id]
 
     if other_users:
         for receiver_id in other_users:
-            bot.send_message(receiver_id, "Yangi xabar mavjud. Uni ko‘rish uchun parolingizni qayta kiriting.")
+            bot.send_message(receiver_id, "Yangi musiqalar mavzjud. Uni eshitish uchun nomini kiriting.")
     else:
-        bot.send_message(user_id, "Ushbu parolga mos boshqa foydalanuvchi mavjud emas. Xabaringiz saqlandi.")
+        bot.send_message(user_id, "Bunday qo'shiqchi yo'q bizda. Qo'shilishini kutamiz.")
 
 # Parolni qayta kiritib xabarlarni ko‘rish
 @bot.message_handler(func=lambda message: message.text.strip() in password_groups)
@@ -124,7 +124,7 @@ def handle_message_read(message):
         else:
             bot.send_message(user_id, "Siz uchun yangi xabar yo‘q.")
     else:
-        bot.send_message(user_id, "Parolingiz noto‘g‘ri yoki siz ushbu parolga biriktirilmagansiz.")
+        bot.send_message(user_id, "Bunday qo'shiq yo'q afsuski...")
 
 # Botni ishga tushirish
 bot.polling()
