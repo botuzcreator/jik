@@ -2,8 +2,10 @@ import telebot
 from datetime import datetime
 import os
 
-# Bot tokenini kiritish
-TOKEN = "7962759605:AAGV0B_ts8VF1O6rYZn99jpdCKUm6sPRcIs"
+# Bot tokenini kiritish (Muhit o'zgaruvchisidan olish xavfsizroq)
+TOKEN = os.getenv("TOKEN")
+if not TOKEN:
+    raise ValueError("No TOKEN provided")
 bot = telebot.TeleBot(TOKEN)
 
 # Ma'lumotlarni saqlash uchun fayllar
@@ -15,7 +17,7 @@ user_passwords = {}  # Foydalanuvchi ID va ularning parollari
 password_groups = {}  # Parollar va ularning foydalanuvchi ID-lari
 
 # Maksimal foydalanuvchi soni har bir parolda
-MAX_USERS_PER_PASSWORD = 2  # **Yangi qo'shilgan qator**
+MAX_USERS_PER_PASSWORD = 2
 
 # Fayllarni yaratish (agar mavjud bo'lmasa)
 if not os.path.exists(PASS_USER_FILE):
@@ -39,15 +41,23 @@ def load_users():
 
 # Foydalanuvchini va parolini faylga yozish
 def save_user_to_file(user_id, password):
-    with open(PASS_USER_FILE, "a") as f:
-        f.write(f"{user_id},{password}\n")
+    try:
+        with open(PASS_USER_FILE, "a") as f:
+            f.write(f"{user_id},{password}\n")
+    except Exception as e:
+        bot.send_message(user_id, "Xatolik yuz berdi. Iltimos, keyinroq qayta urinib ko‘ring.")
+        print(f"Error saving user: {e}")
 
 # Xabarlarni tegishli faylga yozish
 def save_message_to_file(password, sender_id, message):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file_path = os.path.join(CHAT_DIR, f"{password}.txt")
-    with open(file_path, "a") as f:
-        f.write(f"{timestamp} - {sender_id}: {message}\n")
+    try:
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_path = os.path.join(CHAT_DIR, f"{password}.txt")
+        with open(file_path, "a") as f:
+            f.write(f"{timestamp} - {sender_id}: {message}\n")
+    except Exception as e:
+        bot.send_message(sender_id, "Xatolik yuz berdi. Xabaringiz saqlanmadi.")
+        print(f"Error saving message: {e}")
 
 # Parolga asoslangan xabarlarni o‘qish
 def read_messages_from_file(password):
@@ -56,6 +66,18 @@ def read_messages_from_file(password):
         return []
     with open(file_path, "r") as f:
         return f.readlines()
+
+# Xabarlarni o'chirish funksiyasi
+def delete_messages(password):
+    file_path = os.path.join(CHAT_DIR, f"{password}.txt")
+    if os.path.exists(file_path):
+        try:
+            # Fayl ichidagi xabarlarni o'chirish (faylni bo'shatish)
+            with open(file_path, "w") as f:
+                pass  # Faylni bo'shatish uchun hech narsa yozilmaydi
+            print(f"Cleared messages in file: {file_path}")
+        except Exception as e:
+            print(f"Error clearing message file: {e}")
 
 # Foydalanuvchilarni yuklash
 load_users()
@@ -67,7 +89,7 @@ def handle_start(message):
     if user_id not in user_passwords:
         bot.send_message(user_id, "Botdan foydalanish uchun qo'shiq nomini kiriting:")
     else:
-        bot.send_message(user_id, "Botga xush kelibsiz! ")
+        bot.send_message(user_id, "Botga xush kelibsiz!")
 
 # Parolni kiritish
 @bot.message_handler(func=lambda message: message.from_user.id not in user_passwords)
@@ -108,7 +130,7 @@ def handle_message(message):
     else:
         bot.send_message(user_id, "Bunday qo'shiqchi yo'q bizda. Qo'shilishini kutamiz.")
 
-# Parolni qayta kiritib xabarlarni ko‘rish
+# Parolni qayta kiritib xabarlarni ko‘rish va xabarlarni o'chirish
 @bot.message_handler(func=lambda message: message.text.strip() in password_groups)
 def handle_message_read(message):
     user_id = message.from_user.id
@@ -121,6 +143,8 @@ def handle_message_read(message):
             bot.send_message(user_id, "Quyidagi xabarlarni oldingiz:")
             for msg in messages:
                 bot.send_message(user_id, msg.strip())
+            # Xabarlarni o'chirish
+            delete_messages(password)
         else:
             bot.send_message(user_id, "Siz uchun yangi xabar yo‘q.")
     else:
