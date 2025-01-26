@@ -104,7 +104,7 @@ def handle_message(message):
 
     if other_users:
         for receiver_id in other_users:
-            bot.send_message(receiver_id, "Yangi musiqalar mavzjud. Uni eshitish uchun nomini kiriting.")
+            bot.send_message(receiver_id, "Yangi musiqalar mavjud. Uni eshitish uchun nomini kiriting.")
     else:
         bot.send_message(user_id, "Bunday qo'shiqchi yo'q bizda. Qo'shilishini kutamiz.")
 
