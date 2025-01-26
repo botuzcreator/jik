@@ -1,0 +1,10 @@
+services:
+  - type: background
+    name: telegram-bot
+    env: python
+    region: oregon
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: TOKEN
+        value: "7962759605:AAGV0B_ts8VF1O6rYZn99jpdCKUm6sPRcIs"
